@@ -1,0 +1,34 @@
+{
+  "template_id": "parcels",
+  "version": "1.2.0",
+  "description": "CAP parcels table",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "geometry": {
+    "column": "geometry",
+    "crs": "EPSG:3035",
+    "allowed_types": ["Polygon", "MultiPolygon"],
+    "allow_empty": false,
+    "require_bbox": false
+  },
+  "primary_key": ["parcel_id"],
+  "allow_extra_columns": true,
+  "null_equivalents": ["", "NA", "N/A"],
+  "columns": [
+    {"name": "parcel_id", "dtype": "int64", "required": true, "unique": true},
+    {"name": "owner", "dtype": "string", "required": true},
+    {"name": "area_ha", "dtype": "float64", "required": true, "range": {"min": 0, "max": 10000}},
+    {"name": "status", "dtype": "string", "required": false, "enum": ["active", "inactive", "archived"]},
+    {"name": "updated_at", "dtype": "timestamp", "required": true}
+  ],
+  "value_checks": [
+    {
+      "name": "area_positive",
+      "expr": "TRY_CAST(area_ha AS DOUBLE) > 0",
+      "applies_to": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "severity": "error"
+    }
+  ],
+  "duplicate_checks": [
+    {"keys": ["parcel_id"], "severity": "error", "sample_limit": 1000}
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/ds-template.schema.json",
+  "type": "object",
+  "required": ["template_id", "version", "columns"],
+  "properties": {
+    "template_id": {"type": "string"},
+    "version": {"type": "string"},
+    "description": {"type": "string"},
+    "expected_format": {
+      "type": "array",
+      "items": {"enum": ["CSV","GEOPARQUET","GEOPACKAGE","SHAPEFILE"]}
+    },
+    "geometry": {
+      "type": "object",
+      "properties": {
+        "column": {"type":"string"},
+        "crs": {"type":"string"},
+        "allowed_types": {"type":"array","items":{"type":"string"}},
+        "allow_empty": {"type":"boolean"},
+        "require_bbox": {"type":"boolean"}
+      },
+      "additionalProperties": false
+    },
+    "primary_key": {"type": "array", "items": {"type":"string"}},
+    "allow_extra_columns": {"type": "boolean"},
+    "null_equivalents": {"type": "array", "items": {"type":"string"}},
+    "columns": {
+      "type": "array",
+      "items": {
+        "type":"object",
+        "required": ["name","dtype"],
+        "properties": {
+          "name":{"type":"string"},
+          "dtype":{"enum":["int64","float64","string","bool","date","timestamp","geometry"]},
+          "required":{"type":"boolean"},
+          "unique":{"type":"boolean"},
+          "enum":{"type":"array","items":{"type":["string","number","boolean"]}},
+          "regex":{"type":"string"},
+          "range":{"type":"object","properties":{"min":{}, "max":{}}, "additionalProperties": false}
+        },
+        "additionalProperties": false
+      }
+    },
+    "value_checks": {
+      "type":"array",
+      "items": {
+        "type":"object",
+        "required":["name","expr"],
+        "properties": {
+          "name":{"type":"string"},
+          "expr":{"type":"string"},
+          "applies_to":{"type":"array","items":{"enum":["CSV","GEOPARQUET","GEOPACKAGE","SHAPEFILE"]}},
+          "severity":{"enum":["warning","error"], "default":"error"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "duplicate_checks": {
+      "type":"array",
+      "items": {
+        "type":"object",
+        "required":["keys"],
+        "properties": {
+          "keys":{"type":"array","items":{"type":"string"}},
+          "severity":{"enum":["warning","error"], "default":"error"},
+          "sample_limit":{"type":"integer","minimum":1, "default":1000}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
