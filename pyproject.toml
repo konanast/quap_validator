@@ -1,63 +1,82 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "quap_validator"
 version = "0.1.0"
-description = "A tool to validate QUAP data."
-readme = "README.rst"
+description = "Template-driven, memory-safe validator for CSV/GeoParquet/GeoPackage/Shapefile."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+
 authors = [
-  {name = "ANASTASAKIS Konstantinos", email = "konstantinos.anastasakis@"}
+  { name = "ANASTASAKIS Konstantinos", email = "konstantinos.anastasakis@yourdomain.tld" }
 ]
 maintainers = [
-  {name = "ANASTASAKIS Konstantinos", email = "konstantinos.anastasakis@"}
+  { name = "ANASTASAKIS Konstantinos", email = "konstantinos.anastasakis@yourdomain.tld" }
 ]
-classifiers = [
 
-]
-license = {text = "BSD license"}
+license = { file = "LICENSE" }
+
 dependencies = [
-  "typer"
+  "duckdb>=1.0.0",
+  "click>=8.1.7",
+  "jsonschema>=4.22.0",
+  "pandas>=2.2.0",
+  "pyarrow>=16.0.0",
+  "pyogrio>=0.9.0",
+  "fsspec>=2024.6.0",
+  "s3fs>=2024.6.0",
+  "gcsfs>=2024.6.0",
+  "pyproj>=3.6.1",
+  'typing_extensions>=4.8.0; python_version < "3.11"'
 ]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: Scientific/Engineering :: GIS"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/konanast/quap_validator"
+Changelog = "https://github.com/konanast/quap_validator/blob/main/HISTORY.rst"
+Issues = "https://github.com/konanast/quap_validator/issues"
+
+[project.scripts]
+quap-validate = "validator.cli:main"
 
 [project.optional-dependencies]
 dev = [
-    "coverage",  # testing
-    "mypy",  # linting
-    "pytest",  # testing
-    "ruff"  # linting
+  "coverage",
+  "mypy",
+  "pytest",
+  "ruff",
+  "black"
 ]
 
-[project.urls]
-
-bugs = "https://github.com/konanast/quap_validator/issues"
-changelog = "https://github.com/konanast/quap_validator/blob/master/changelog.md"
-homepage = "https://github.com/konanast/quap_validator"
-
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
-"*" = ["*.*"]
-
-
-
-
-# Mypy
-# ----
+validator = ["templates/*.json", "templates/*.schema.json"]
 
 [tool.mypy]
 files = "."
-
-# Use strict defaults
 strict = true
 warn_unreachable = true
 warn_no_return = true
 
 [[tool.mypy.overrides]]
-# Don't require test functions to include types
 module = "tests.*"
 allow_untyped_defs = true
 disable_error_code = "attr-defined"
-

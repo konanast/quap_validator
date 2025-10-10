@@ -1,0 +1,8 @@
+site_name: QUAP Validator
+repo_url: https://github.com/konanast/quap_validator
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Usage: usage.md
