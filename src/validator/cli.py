@@ -219,10 +219,33 @@ def main(
     engine_result = {"ok": True, "errors": [], "warnings": [], "metrics": {}}
     needed_cols = [c["name"] for c in tpl.get("columns", [])] or None
 
+    tpl_id_lower = (tpl.get("template_id") or "").lower()
+    tpl_cols = [c.get("name", "").lower() for c in tpl.get("columns", [])]
+    layer_lower = (layer or "").lower()
+
+    canonical_geom = None
+    if "lpis_geom" in tpl_cols or "lpis" in tpl_id_lower or "lpis" in layer_lower:
+        canonical_geom = "lpis_geom"
+    elif "gsa_geom" in tpl_cols or "gsa" in tpl_id_lower or "gsa" in layer_lower:
+        canonical_geom = "gsa_geom"
+
+    alias_candidates = ["lpis_geom", "geom", "geometry", "gsa_geom", "gem"]
+    if needed_cols:
+        merged = needed_cols + [a for a in alias_candidates if a not in needed_cols]
+        needed_cols = list(dict.fromkeys(merged))
+
     try:
         if fmt == "CSV":
-            load_csv_view(con, str(dataset_path), "v")
+            load_csv_view(
+                con,
+                str(dataset_path),
+                "v",
+                canonical_geometry=canonical_geom,
+                # delimiter=";",  # uncomment if you want to force QUAP CSV spec
+            )
+
         elif fmt == "GEOPARQUET":
+            # (optional) quick metadata probe to flag corruption early
             try:
                 import pyarrow.parquet as pq
 
@@ -232,7 +255,13 @@ def main(
                     {"code": "CORRUPTED_FILE", "detail": f"parquet_metadata: {e}"}
                 )
                 engine_result["ok"] = False
-            load_parquet_view(con, str(dataset_path), "v")
+            load_parquet_view(
+                con,
+                str(dataset_path),
+                "v",
+                canonical_geometry=canonical_geom,
+            )
+
         elif fmt == "GEOPACKAGE":
             errs = gpkg_integrity_errors(str(dataset_path))
             if errs:
@@ -240,6 +269,7 @@ def main(
                     {"code": "CORRUPTED_FILE", "detail": "; ".join(errs)}
                 )
                 engine_result["ok"] = False
+
             if not layer:
                 layers = gpkg_list_layers(str(dataset_path))
                 if not layers:
@@ -247,9 +277,16 @@ def main(
                         "No feature layers found in GeoPackage; use --layer"
                     )
                 layer = layers[0]
+
             _, diagnostics = load_gpkg_view(
-                con, str(dataset_path), layer, needed_cols, view_name="v"
+                con,
+                str(dataset_path),
+                layer,
+                needed_cols,
+                view_name="v",
+                canonical_geometry=canonical_geom,
             )
+
         elif fmt == "SHAPEFILE":
             errs = shapefile_integrity_errors(str(dataset_path))
             if errs:
@@ -257,15 +294,19 @@ def main(
                     {"code": "CORRUPTED_FILE", "detail": "; ".join(errs)}
                 )
                 engine_result["ok"] = False
+
             _, diagnostics = load_shapefile_into_duck(
                 con,
                 str(dataset_path),
                 needed_cols or [],
                 table_name="_shape_tmp",
                 view_name="v",
+                canonical_geometry=canonical_geom,  # <-- pass it here too
             )
+
         else:
             raise click.UsageError(f"Unsupported format: {fmt}")
+
     except Exception as e:
         engine_result["errors"].append(
             {"code": "CORRUPTED_FILE", "detail": f"open_failed: {e}"}
