@@ -1,0 +1,73 @@
+{
+  "templates": [
+    {
+      "template_id": "lpis_population",
+      "version": "2025.10",
+      "label": "LPIS population (reference parcels)",
+      "description": "Core LPIS reference parcels dataset for November 2026 data submission.",
+      "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "default_geometry_column": "lpis_geom",
+      "primary_key": ["lpis_rp_id"],
+      "aliases": ["lpis", "parcels", "reference_parcels"],
+      "path": "lpis_population.json"
+    },
+    {
+      "template_id": "gsa_population",
+      "version": "2025.10",
+      "label": "GSA population",
+      "description": "Graphical sub-areas (GSA) dataset defining farmer-declared parcels for 2026 submission.",
+      "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "default_geometry_column": "gsa_geom",
+      "primary_key": ["gsa_par_id"],
+      "aliases": ["gsa", "declared_parcels"],
+      "path": "gsa_population.json"
+    },
+    {
+      "template_id": "gsa_lpis_relationship",
+      "version": "2025.10",
+      "label": "GSA–LPIS relationship",
+      "description": "Link table mapping GSA parcels to LPIS reference parcels for overlay validation.",
+      "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "primary_key": ["lpis_code", "lpis_rp_id", "gsa_par_id"],
+      "aliases": ["relation", "gsa_lpis"],
+      "path": "gsa_lpis_relationship.json"
+    },
+    {
+      "template_id": "interventions",
+      "version": "2025.10",
+      "label": "Interventions / unit amounts",
+      "description": "Lookup table of interventions, types, and unit amount groups (UA) for CAP 2026.",
+      "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "primary_key": ["ua"],
+      "aliases": ["interv", "ua_list"],
+      "path": "interventions.json"
+    },
+    {
+      "template_id": "gsa_ua_claimed",
+      "version": "2025.10",
+      "label": "GSA / unit amounts claimed",
+      "description": "Declared claimed areas per GSA parcel and unit amount for the 2026 campaign.",
+      "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "primary_key": ["gsa_par_id", "ua"],
+      "aliases": ["claims", "gsa_claims"],
+      "path": "gsa_ua_claimed.json"
+    },
+    {
+      "template_id": "regions",
+      "version": "2025.10",
+      "label": "Regions (optional)",
+      "description": "Regional subdivision polygons and target percentages (sum = 100). Optional dataset.",
+      "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+      "default_geometry_column": "reg_geom",
+      "primary_key": ["reg_code"],
+      "aliases": ["regionalisation", "zones"],
+      "path": "regions.json"
+    }
+  ],
+  "meta": {
+    "version": "2025.10",
+    "generated_by": "quap_validator",
+    "generated_on": "2025-10-14T00:00:00Z",
+    "notes": "Template index for IACS Quality Assessment November 2026 data exchange."
+  }
+}

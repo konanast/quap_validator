@@ -1,0 +1,28 @@
+{
+  "template_id": "gsa_population",
+  "version": "2025.10",
+  "description": "GSA population – Nov 2025 submission",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "geometry": {
+    "column": "gsa_geom",
+    "allowed_types": ["Polygon", "MultiPolygon"],
+    "allow_empty": false
+  },
+  "geometry_aliases": ["lpis_geom", "geom", "geometry"],
+  "primary_key": ["gsa_par_id"],
+  "allow_extra_columns": true,
+  "null_equivalents": [""],
+  "columns": [
+    {"name": "gsa_code",   "dtype": "string",  "required": true},
+    {"name": "gsa_par_id", "dtype": "string",  "required": true, "unique": true},
+    {"name": "gsa_hol_id", "dtype": "string",  "required": true},
+    {"name": "gsa_col_id", "dtype": "string",  "required": false},
+    {"name": "main_crop",  "dtype": "string",  "required": true},
+    {"name": "catch_crop", "dtype": "string",  "required": false},
+    {"name": "organic",    "dtype": "bool",    "required": true},
+    {"name": "gsa_geom",   "dtype": "geometry","required": true}
+  ],
+  "duplicate_checks": [
+    {"keys": ["gsa_par_id"], "severity": "error", "sample_limit": 1000}
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "template_id": "interventions",
+  "version": "2025.10",
+  "description": "List of interventions / unit amounts – Nov 2025",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "primary_key": ["ua"],
+  "allow_extra_columns": true,
+  "null_equivalents": [""],
+  "columns": [
+    {"name": "ua",        "dtype": "string", "required": true, "unique": true},
+    {"name": "ua_grp",    "dtype": "string", "required": true},
+    {"name": "interv",    "dtype": "string", "required": true},
+    {"name": "interv_lev","dtype": "string", "required": true, "enum": ["parcel", "holding"]},
+    {"name": "interv_typ","dtype": "string", "required": true},
+    {"name": "ua_grp_est","dtype": "string", "required": false}
+  ],
+  "duplicate_checks": [
+    {"keys": ["ua"], "severity": "error", "sample_limit": 1000}
+  ]
+}

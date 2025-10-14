@@ -1,0 +1,34 @@
+{
+  "template_id": "lpis_population",
+  "version": "2025.10",
+  "description": "LPIS population (reference parcels) – Nov 2025 submission",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "geometry": {
+    "column": "lpis_geom",
+    "allowed_types": ["Polygon", "MultiPolygon"],
+    "allow_empty": false
+  },
+  "geometry_aliases": ["lpis_geom", "geom", "geometry"],
+  "primary_key": ["lpis_rp_id"],
+  "allow_extra_columns": true,
+  "null_equivalents": [""],
+  "columns": [
+    {"name": "lpis_code",  "dtype": "string",  "required": true},
+    {"name": "lpis_rp_id", "dtype": "string",  "required": true, "unique": true},
+    {"name": "tot_area",   "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "al_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "pc_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "pg_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "na_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "af_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "n2000_area", "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "pw_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "lf_area",    "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "anc_area",   "dtype": "float64", "required": true, "range": {"min": 0}},
+    {"name": "avail_area", "dtype": "bool",    "required": true},
+    {"name": "lpis_geom",  "dtype": "geometry","required": true}
+  ],
+  "duplicate_checks": [
+    {"keys": ["lpis_rp_id"], "severity": "error", "sample_limit": 1000}
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "template_id": "gsa_ua_claimed",
+  "version": "2025.10",
+  "description": "GSA / unit amounts claimed – Nov 2025",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "allow_extra_columns": true,
+  "null_equivalents": [""],
+  "columns": [
+    {"name": "gsa_par_id", "dtype": "string",  "required": true},
+    {"name": "ua",         "dtype": "string",  "required": true},
+    {"name": "claim_area", "dtype": "float64", "required": true, "range": {"min": 0}}
+  ],
+  "duplicate_checks": [
+    {"keys": ["gsa_par_id", "ua"], "severity": "error", "sample_limit": 1000}
+  ]
+}

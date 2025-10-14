@@ -1,13 +1,12 @@
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional, Literal
+import os
 import json
 import datetime as _dt
-import os
+from dataclasses import dataclass, field, asdict
+from typing import Any, Dict, List, Optional, Literal
 
 Severity = Literal["error", "warning", "info"]
 
-# Normalized issue codes (keep these stable as your public API)
 ISSUE = {
     "CORRUPTED_FILE": "CORRUPTED_FILE",
     "MISSING_COLUMNS": "MISSING_COLUMNS",
@@ -17,12 +16,11 @@ ISSUE = {
     "RANGE_VIOLATION": "RANGE_VIOLATION",
     "NULL_REQUIRED": "NULL_REQUIRED",
     "DUPLICATES": "DUPLICATES",
-    # geo-related (even if you add them later)
     "GEOMETRY_CRS_MISMATCH": "GEOMETRY_CRS_MISMATCH",
     "GEOMETRY_TYPE_MISMATCH": "GEOMETRY_TYPE_MISMATCH",
+    "UNPACK_ERROR": "UNPACK_ERROR",
 }
 
-# Exit codes (keep deterministic; 0 means success)
 EXIT_OK = 0
 EXIT_CORRUPTED = 2
 EXIT_SCHEMA = 3
@@ -30,23 +28,27 @@ EXIT_TYPES_OR_VALUES = 4
 EXIT_DUPLICATES = 5
 EXIT_OTHER = 6
 
+
 @dataclass
 class InputMeta:
     path: str
-    format: str
+    format: Optional[str] = None
     layer: Optional[str] = None
     size_bytes: Optional[int] = None
+
 
 @dataclass
 class TemplateMeta:
     template_id: str
     version: str
 
+
 @dataclass
 class Provenance:
-    tool_version: str = "0.1.0"
+    tool_version: str = "0.2.0"
     git_rev: Optional[str] = None
     run_id: Optional[str] = None
+
 
 @dataclass
 class Issue:
@@ -59,6 +61,7 @@ class Issue:
     invalid_rows: Optional[int] = None
     examples: Optional[List[Dict[str, Any]]] = None
     extra: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class Report:
@@ -79,7 +82,6 @@ class Report:
     infos: List[Issue] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
-        # dataclasses → dict, converting nested dataclasses too
         def _conv(obj):
             if hasattr(obj, "__dataclass_fields__"):
                 return {k: _conv(v) for k, v in asdict(obj).items()}
@@ -88,6 +90,7 @@ class Report:
             if isinstance(obj, dict):
                 return {k: _conv(v) for k, v in obj.items()}
             return obj
+
         return _conv(self)
 
     def to_json(self, indent: Optional[int] = 2) -> str:
@@ -111,30 +114,37 @@ class Report:
         }
 
     def exit_code(self) -> int:
-        # Prioritize the most severe/meaningful exit code based on issue codes
         codes = [i.code for i in self.errors]
         if ISSUE["CORRUPTED_FILE"] in codes:
             return EXIT_CORRUPTED
         if ISSUE["MISSING_COLUMNS"] in codes:
             return EXIT_SCHEMA
-        if ISSUE["DTYPE_MISMATCH"] in codes or ISSUE["ENUM_VIOLATION"] in codes \
-           or ISSUE["RANGE_VIOLATION"] in codes or ISSUE["NULL_REQUIRED"] in codes:
+        if (
+            ISSUE["DTYPE_MISMATCH"] in codes
+            or ISSUE["ENUM_VIOLATION"] in codes
+            or ISSUE["RANGE_VIOLATION"] in codes
+            or ISSUE["NULL_REQUIRED"] in codes
+        ):
             return EXIT_TYPES_OR_VALUES
         if ISSUE["DUPLICATES"] in codes:
             return EXIT_DUPLICATES
         return EXIT_OK if self.ok else EXIT_OTHER
 
+
+# ---- Helpers ----------------------------------------------------------------
 def _now_iso() -> str:
     return _dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
+
 def redact_path(p: str) -> str:
-    # Optional: redact credentials in URIs (s3://key:secret@bucket/path → s3://***@bucket/path)
-    if "@" in p and "://" in p:
+    # redact credentials in URIs like scheme://user:pass@host/...
+    if "://" in p:
         scheme, rest = p.split("://", 1)
         if "@" in rest and ":" in rest.split("@")[0]:
-            creds, tail = rest.split("@", 1)
+            _, tail = rest.split("@", 1)
             return f"{scheme}://***@{tail}"
     return p
+
 
 def build_report(
     engine_result: Dict[str, Any],
@@ -144,35 +154,53 @@ def build_report(
     provenance: Optional[Dict[str, Any]] = None,
 ) -> Report:
     """
-    Normalize the engine output (whatever adapter produced) into a stable Report.
-    Expected engine_result keys (as per your engine):
+    Normalize the engine output into a stable Report.
+
+    Expected engine_result keys:
       - ok: bool
       - errors: List[Dict]
       - warnings: List[Dict]
       - metrics: Dict
       - timing_sec: float
-      - row_count: Optional[int] (if provided by engine; else None)
+      - row_count: Optional[int]
       - summary: Optional[Dict]
+      - infos: Optional[List[Dict]]
     """
     started = started_at or _now_iso()
     finished = _now_iso()
     duration = float(engine_result.get("timing_sec") or 0.0)
 
-    # Coerce issues
-    def _coerce_issues(items: List[Dict[str, Any]] | None, sev: Severity) -> List[Issue]:
+    def _coerce_issues(
+        items: List[Dict[str, Any]] | None, sev: Severity
+    ) -> List[Issue]:
         res = []
         for it in items or []:
-            res.append(Issue(
-                code=str(it.get("code")),
-                severity=sev,
-                detail=it.get("detail"),
-                column=it.get("column"),
-                columns=it.get("columns"),
-                keys=it.get("keys"),
-                invalid_rows=it.get("invalid_rows"),
-                examples=it.get("examples"),
-                extra={k:v for k,v in it.items() if k not in {"code","detail","column","columns","keys","invalid_rows","examples"}}
-            ))
+            res.append(
+                Issue(
+                    code=str(it.get("code")),
+                    severity=sev,
+                    detail=it.get("detail"),
+                    column=it.get("column"),
+                    columns=it.get("columns"),
+                    keys=it.get("keys"),
+                    invalid_rows=it.get("invalid_rows"),
+                    examples=it.get("examples"),
+                    extra={
+                        k: v
+                        for k, v in it.items()
+                        if k
+                        not in {
+                            "code",
+                            "detail",
+                            "column",
+                            "columns",
+                            "keys",
+                            "invalid_rows",
+                            "examples",
+                        }
+                    },
+                )
+            )
         return res
 
     report = Report(
@@ -192,6 +220,7 @@ def build_report(
     )
     return report
 
+
 def render_text(report: Report) -> str:
     """Human-readable single-paragraph summary for CLI/stdout."""
     sev = report.severity_counts()
@@ -200,8 +229,10 @@ def render_text(report: Report) -> str:
     layer = f" layer={report.input.layer}" if report.input.layer else ""
     rc = f" rows={report.row_count}" if report.row_count is not None else ""
     status = "OK" if report.ok else "FAILED"
-    line1 = f"[{status}] template={tpl} input={src}{layer}{rc} " \
-            f"errors={sev['errors']} warnings={sev['warnings']} duration={report.duration_sec:.2f}s"
+    line1 = (
+        f"[{status}] template={tpl} input={src}{layer}{rc} "
+        f"errors={sev['errors']} warnings={sev['warnings']} duration={report.duration_sec:.2f}s"
+    )
 
     def _sample_issues(items: List[Issue], n=3) -> List[str]:
         out = []

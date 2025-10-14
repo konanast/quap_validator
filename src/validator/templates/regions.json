@@ -1,0 +1,22 @@
+{
+  "template_id": "regions",
+  "version": "2025.10",
+  "description": "Regional subdivisions (optional) – Nov 2025",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "geometry": {
+    "column": "reg_geom",
+    "allowed_types": ["Polygon", "MultiPolygon"],
+    "allow_empty": false
+  },
+  "primary_key": ["reg_code"],
+  "allow_extra_columns": true,
+  "null_equivalents": [""],
+  "columns": [
+    {"name": "reg_code",   "dtype": "string",   "required": true, "unique": true},
+    {"name": "target_per", "dtype": "int64",    "required": true, "range": {"min": 0, "max": 100}},
+    {"name": "reg_geom",   "dtype": "geometry", "required": true}
+  ],
+  "duplicate_checks": [
+    {"keys": ["reg_code"], "severity": "error", "sample_limit": 1000}
+  ]
+}

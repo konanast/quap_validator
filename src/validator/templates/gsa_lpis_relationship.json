@@ -1,0 +1,16 @@
+{
+  "template_id": "gsa_lpis_relationship",
+  "version": "2025.10",
+  "description": "Relationship between GSA parcels and LPIS reference parcels – Nov 2025",
+  "expected_format": ["CSV", "GEOPARQUET", "GEOPACKAGE", "SHAPEFILE"],
+  "allow_extra_columns": true,
+  "null_equivalents": [""],
+  "columns": [
+    {"name": "lpis_code",  "dtype": "string", "required": true},
+    {"name": "lpis_rp_id", "dtype": "string", "required": true},
+    {"name": "gsa_par_id", "dtype": "string", "required": true}
+  ],
+  "duplicate_checks": [
+    {"keys": ["lpis_code", "lpis_rp_id", "gsa_par_id"], "severity": "error", "sample_limit": 1000}
+  ]
+}
