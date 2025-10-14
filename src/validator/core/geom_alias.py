@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
+from validator.core.duck import ensure_spatial_extension
+
 
 def _duckdb_cols(con, table_or_view: str) -> dict[str, str]:
     rows = con.execute(
@@ -82,6 +84,7 @@ def normalize_geometry_view(
             }
         src_id = f'"{canonical}"'
         expr = _geom_expr(src_id)
+        ensure_spatial_extension(con)
         con.execute(
             f"""
             CREATE OR REPLACE VIEW "{dst_view}" AS
@@ -120,6 +123,7 @@ def normalize_geometry_view(
     src_id = f'"{src_name}"'
     expr = _geom_expr(src_id)
 
+    ensure_spatial_extension(con)
     con.execute(
         f"""
         CREATE OR REPLACE VIEW "{dst_view}" AS

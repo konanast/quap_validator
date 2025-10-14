@@ -3,6 +3,7 @@ import duckdb
 import sqlite3
 from typing import List, Tuple, Optional
 from validator.core.geom_alias import _duckdb_cols, _pick_first_present
+from validator.core.duck import ensure_spatial_extension
 
 def gpkg_integrity_errors(path: str) -> list[str]:
     """Return non-'ok' messages from PRAGMA quick_check (fast integrity screen)."""
@@ -118,6 +119,7 @@ def _normalize_geometry_view(
     src_lc = src_name
     expr = f"COALESCE(ST_GeomFromWKB(TRY_CAST({src_lc} AS BLOB)), ST_GeomFromText({src_lc}))"
 
+    ensure_spatial_extension(con)
     con.execute(
         f"""
         CREATE OR REPLACE VIEW {dst_view} AS

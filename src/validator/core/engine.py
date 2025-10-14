@@ -2,6 +2,7 @@ from __future__ import annotations
 import duckdb, sqlite3, time
 from typing import Iterable
 
+from validator.core.duck import ensure_spatial_extension
 DUCK_TYPES = {
     "int64": "BIGINT",
     "float64": "DOUBLE",
@@ -227,6 +228,9 @@ def ensure_geometry_alias(
         geom_expr = f"ST_GeomFromWKB({src_lc})"
     elif t in ("VARCHAR", "TEXT"):
         geom_expr = f"ST_GeomFromText({src_lc})"
+
+    if geom_expr != src_lc:
+        ensure_spatial_extension(con)
 
     con.execute(
         f"""
